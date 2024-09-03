@@ -8,9 +8,9 @@ namespace WebApi.DTO
 {
    public class GetAllSchoolsDTO
 {
-    public string Name { get; set; }
-    public string Location { get; set; }
+    public string Name { get; set; }=string.Empty;
+    public string Location { get; set; }=string.Empty;
     public decimal Fees { get; set; }
-    public List<GetAllBusesDTO> Transports { get; set; }
+    public List<GetAllBusesDTO> Transports { get; set; }=new List<GetAllBusesDTO>();
 }
 }

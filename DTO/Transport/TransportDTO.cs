@@ -8,6 +8,6 @@ namespace WebApi.DTO.Transport
     public class TransportDTO
     {
         public int Id { get; set; }
-        public string BusNumber { get; set; }
+        public string BusNumber { get; set; }=string.Empty;
     }
 }

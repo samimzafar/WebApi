@@ -8,10 +8,10 @@ namespace WebApi.DTO.School
 {
     public class AddSchoolRequestDTO
     {
-        public string Name { get; set; }
-        public string Location { get; set; }
+        public string Name { get; set; }=string.Empty;
+        public string Location { get; set; }=string.Empty;
         public decimal Fees { get; set; }
         public bool Open { get; set; }
-        public List<AddTransportRequestDTO> Transports { get; set; }
+        public List<AddTransportRequestDTO> Transports { get; set; }=new List<AddTransportRequestDTO>();
     }
 }

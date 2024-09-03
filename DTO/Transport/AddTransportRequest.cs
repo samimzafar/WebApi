@@ -7,6 +7,6 @@ namespace WebApi.DTO.Transport
 {
     public class AddTransportRequestDTO
     {
-         public string BusNumber { get; set; }
+         public string BusNumber { get; set; }=string.Empty;
     }
 }
