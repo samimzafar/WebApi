@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApi.Data;
 using WebApi.DTO.School;
 using WebApi.DTO.Student;
 using WebApi.DTO.Transport;
 using WebApi.Models;
+using WebApi.Repository;
 
 namespace WebApi.Controllers
 {
@@ -12,11 +11,11 @@ namespace WebApi.Controllers
     [Route("api/[controller]")]
     public class StudentController : ControllerBase
     {
-        private readonly SchoolContext _schoolContext;
+        private readonly IStudent _studentRepository;
 
-        public StudentController(SchoolContext context)
+        public StudentController(IStudent studentRepo)
         {
-            _schoolContext = context;
+            _studentRepository = studentRepo;
         }
 
         [HttpPost("register-student")]
@@ -29,8 +28,7 @@ namespace WebApi.Controllers
             }
 
             // Check if the school exists
-            var school = await _schoolContext.Schools
-                .FirstOrDefaultAsync(s => s.Name == request.SchoolName);
+            var school = await _studentRepository.GetSchoolByNameAsync(request.SchoolName);
 
             if (school == null)
             {
@@ -38,8 +36,7 @@ namespace WebApi.Controllers
             }
 
             // Check if the bus number exists and is assigned to the specified school
-            var transport = await _schoolContext.Transports
-                .FirstOrDefaultAsync(t => t.BusNumber == request.BusNumber && t.SchoolId == school.Id);
+            var transport = await _studentRepository.GetTransportByBusNumberAndSchoolIdAsync(request.BusNumber, school.Id);
 
             if (transport == null)
             {
@@ -57,20 +54,15 @@ namespace WebApi.Controllers
             };
 
             // Add the student to the context
-            _schoolContext.Students.Add(student);
-            await _schoolContext.SaveChangesAsync();
+            await _studentRepository.AddStudentAsync(student);
 
             return Ok(new { Message = "Student registered successfully." });
         }
 
-
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStudent(int id)
         {
-            var student = await _schoolContext.Students
-                .Include(s => s.School)
-                .Include(s => s.Transport)
-                .FirstOrDefaultAsync(s => s.Id == id);
+            var student = await _studentRepository.GetStudentByIdAsync(id);
 
             if (student == null)
             {
