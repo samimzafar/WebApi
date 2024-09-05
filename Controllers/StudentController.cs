@@ -2,8 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebApi.DTO.School;
 using WebApi.DTO.Student;
 using WebApi.DTO.Transport;
-using WebApi.Models;
-using WebApi.Repository;
+using WebApi.Services;
 
 namespace WebApi.Controllers
 {
@@ -11,11 +10,11 @@ namespace WebApi.Controllers
     [Route("api/[controller]")]
     public class StudentController : ControllerBase
     {
-        private readonly IStudent _studentRepository;
+        private readonly IStudentService _studentService;
 
-        public StudentController(IStudent studentRepo)
+        public StudentController(IStudentService studentService)
         {
-            _studentRepository = studentRepo;
+            _studentService = studentService;
         }
 
         [HttpPost("register-student")]
@@ -27,68 +26,38 @@ namespace WebApi.Controllers
                 return BadRequest("Name, address, age, school name, and bus number are required.");
             }
 
-            // Check if the school exists
-            var school = await _studentRepository.GetSchoolByNameAsync(request.SchoolName);
-
-            if (school == null)
+            try
             {
-                return NotFound($"School with name '{request.SchoolName}' does not exist.");
+                await _studentService.RegisterStudentAsync(request);
+                return Ok(new { Message = "Student registered successfully." });
             }
-
-            // Check if the bus number exists and is assigned to the specified school
-            var transport = await _studentRepository.GetTransportByBusNumberAndSchoolIdAsync(request.BusNumber, school.Id);
-
-            if (transport == null)
+            catch (Exception ex)
             {
-                return NotFound($"Bus number '{request.BusNumber}' is not assigned to the school '{request.SchoolName}' or does not exist.");
+                return BadRequest(ex.Message);
             }
-
-            // Create a new student
-            var student = new Student
-            {
-                Name = request.Name,
-                Address = request.Address,
-                Age = request.Age,
-                SchoolId = school.Id,
-                TransportId = transport.Id // Link to the existing transport
-            };
-
-            // Add the student to the context
-            await _studentRepository.AddStudentAsync(student);
-
-            return Ok(new { Message = "Student registered successfully." });
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStudent(int id)
         {
-            var student = await _studentRepository.GetStudentByIdAsync(id);
-
-            if (student == null)
+            if (id <= 0)
             {
-                return NotFound();
+                return BadRequest("Invalid student ID.");
             }
-
-            var studentDto = new GetStudentDto
+            try
             {
-                Id = student.Id,
-                Name = student.Name,
-                Address = student.Address,
-                Age = student.Age,
-                School = new SchoolDTO
+                var studentDto = await _studentService.GetStudentDetailsAsync(id);
+                if (studentDto == null)
                 {
-                    Id = student.School.Id,
-                    Name = student.School.Name,
-                    Location = student.School.Location
-                },
-                Transport = new TransportDTO
-                {
-                    Id = student.Transport.Id,
-                    BusNumber = student.Transport.BusNumber
+                    return NotFound(new { Message = $"Student with ID {id} not found." });
                 }
-            };
 
-            return Ok(studentDto);
+                return Ok(studentDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred while retrieving the student.", Error = ex.Message });
+            }
         }
 
     }
